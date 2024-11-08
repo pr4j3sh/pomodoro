@@ -11,9 +11,9 @@ const workSpan = document.getElementById("works");
 const breakSpan = document.getElementById("breaks");
 const longBreakSpan = document.getElementById("long-breaks");
 
-const workTime = 25 * 60 * 1000; // 25 minutes in milliseconds
-const breakTime = 5 * 60 * 1000; // 5 minutes in milliseconds
-const longBreakTime = 15 * 60 * 1000; // 15 minutes in milliseconds
+const workTime = 25 * 60 * 1000;
+const breakTime = 5 * 60 * 1000;
+const longBreakTime = 15 * 60 * 1000;
 
 let startTime = 0;
 let elapsedTime = 0;
@@ -52,7 +52,7 @@ function updateTime() {
       cycleCount++;
       setElement(workSpan, cycleCount);
       currentPhase = cycleCount % 4 === 0 ? "longBreak" : "break";
-      startTime = Date.now(); // Reset start time for the next phase
+      startTime = Date.now();
     }
   } else if (currentPhase === "break") {
     remainingTime = breakTime - elapsedTime;
@@ -60,36 +60,34 @@ function updateTime() {
       playSound();
       setElement(breakSpan, cycleCount);
       currentPhase = "work";
-      startTime = Date.now(); // Reset start time for the next phase
+      startTime = Date.now();
     }
   } else if (currentPhase === "longBreak") {
     remainingTime = longBreakTime - elapsedTime;
     if (remainingTime <= 0) {
       playSound();
       setElement(longBreakSpan, cycleCount);
-      cycleCount = 0; // Reset cycle count after long break
-      currentPhase = "work";
-      startTime = Date.now(); // Reset start time for the next phase
+      runReset();
     }
   }
 
-  const minutes = Math.floor(remainingTime / 60000); // Convert ms to minutes
-  const seconds = Math.floor((remainingTime % 60000) / 1000); // Get the remaining seconds
+  const minutes = Math.floor(remainingTime / 60000);
+  const seconds = Math.floor((remainingTime % 60000) / 1000);
 
   setMinutes(minutes);
   setSeconds(seconds);
 
-  requestAnimationFrame(updateTime); // Update every frame, ensuring real-time progress
+  requestAnimationFrame(updateTime);
 }
 
 function startTimer() {
   if (paused) {
-    startTime = Date.now() - elapsedTime; // Continue from where it stopped
+    startTime = Date.now() - elapsedTime;
   } else {
     startTime = Date.now();
   }
   paused = false;
-  updateTime(); // Start the real-time updates
+  updateTime();
 }
 
 function runStop() {
@@ -100,9 +98,9 @@ function runReset() {
   paused = true;
   cycleCount = 0;
   currentPhase = "work";
-  elapsedTime = 0; // Reset elapsed time
+  elapsedTime = 0;
   remainingTime = workTime;
-  startTime = Date.now(); // Reset start time for the new session
+  startTime = Date.now();
   setMinutes("00");
   setSeconds("00");
   setElement(workSpan, cycleCount);
