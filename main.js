@@ -24,7 +24,6 @@ let cycleCount = 0;
 let currentTimeout;
 let paused = false;
 let currentPhase = "work";
-let timeWhenTabWasHidden = 0;
 
 const countdownSound = new Audio(Sound);
 
@@ -124,17 +123,3 @@ function runReset() {
 startBtn.addEventListener("click", startTimer);
 stopBtn.addEventListener("click", runStop);
 resetBtn.addEventListener("click", runReset);
-
-document.addEventListener("visibilitychange", function () {
-  if (document.hidden) {
-    timeWhenTabWasHidden = Date.now();
-    paused = true;
-    clearTimeout(currentTimeout);
-  } else {
-    if (timeWhenTabWasHidden) {
-      const timeElapsedWhileHidden = Date.now() - timeWhenTabWasHidden;
-      secondCount -= Math.floor(timeElapsedWhileHidden / delay);
-      runCountdown();
-    }
-  }
-});
