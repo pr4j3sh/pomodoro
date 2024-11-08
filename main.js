@@ -11,20 +11,16 @@ const workSpan = document.getElementById("works");
 const breakSpan = document.getElementById("breaks");
 const longBreakSpan = document.getElementById("long-breaks");
 
-const workTime = 25;
-const breakTime = 5;
-const longBreakTime = 15;
-const delay = 1000;
+const workTime = 25 * 60 * 1000; // 25 minutes in milliseconds
+const breakTime = 5 * 60 * 1000; // 5 minutes in milliseconds
+const longBreakTime = 15 * 60 * 1000; // 15 minutes in milliseconds
 
-let workCount = workTime;
-let breakCount = breakTime;
-let longBreakCount = longBreakTime;
-let secondCount = 0;
-let cycleCount = 0;
-let currentTimeout;
-let paused = false;
+let startTime = 0;
+let elapsedTime = 0;
+let remainingTime = workTime;
 let currentPhase = "work";
-
+let cycleCount = 0;
+let paused = false;
 const countdownSound = new Audio(Sound);
 
 function setMinutes(count) {
@@ -43,76 +39,70 @@ function playSound() {
   countdownSound.play();
 }
 
-function runCountdown() {
+function updateTime() {
   if (paused) return;
 
-  if (secondCount === 0) {
-    if (currentPhase === "work" && workCount > 0) {
-      workCount--;
-      secondCount = 59;
-      setMinutes(workCount);
-    } else if (currentPhase === "break" && breakCount > 0) {
-      breakCount--;
-      secondCount = 59;
-      setMinutes(breakCount);
-    } else if (currentPhase === "longBreak" && longBreakCount > 0) {
-      longBreakCount--;
-      secondCount = 59;
-      setMinutes(longBreakCount);
-    } else {
-      switch (currentPhase) {
-        case "work":
-          workCount = workTime;
-          cycleCount++;
-          setElement(workSpan, cycleCount);
-          currentPhase = cycleCount % 4 === 0 ? "longBreak" : "break";
-          playSound();
-          runCountdown();
-          return;
-        case "break":
-          breakCount = breakTime;
-          setElement(breakSpan, cycleCount);
-          currentPhase = "work";
-          playSound();
-          runCountdown();
-          return;
-        case "longBreak":
-          longBreakCount = longBreakTime;
-          setElement(longBreakSpan, cycleCount);
-          cycleCount = 0;
-          currentPhase = "work";
-          playSound();
-          runCountdown();
-          return;
-      }
+  const now = Date.now();
+  elapsedTime = now - startTime;
+
+  if (currentPhase === "work") {
+    remainingTime = workTime - elapsedTime;
+    if (remainingTime <= 0) {
+      playSound();
+      cycleCount++;
+      setElement(workSpan, cycleCount);
+      currentPhase = cycleCount % 4 === 0 ? "longBreak" : "break";
+      startTime = Date.now(); // Reset start time for the next phase
     }
-  } else {
-    secondCount--;
+  } else if (currentPhase === "break") {
+    remainingTime = breakTime - elapsedTime;
+    if (remainingTime <= 0) {
+      playSound();
+      setElement(breakSpan, cycleCount);
+      currentPhase = "work";
+      startTime = Date.now(); // Reset start time for the next phase
+    }
+  } else if (currentPhase === "longBreak") {
+    remainingTime = longBreakTime - elapsedTime;
+    if (remainingTime <= 0) {
+      playSound();
+      setElement(longBreakSpan, cycleCount);
+      cycleCount = 0; // Reset cycle count after long break
+      currentPhase = "work";
+      startTime = Date.now(); // Reset start time for the next phase
+    }
   }
 
-  setSeconds(secondCount);
-  currentTimeout = setTimeout(runCountdown, delay);
+  const minutes = Math.floor(remainingTime / 60000); // Convert ms to minutes
+  const seconds = Math.floor((remainingTime % 60000) / 1000); // Get the remaining seconds
+
+  setMinutes(minutes);
+  setSeconds(seconds);
+
+  requestAnimationFrame(updateTime); // Update every frame, ensuring real-time progress
 }
 
 function startTimer() {
+  if (paused) {
+    startTime = Date.now() - elapsedTime; // Continue from where it stopped
+  } else {
+    startTime = Date.now();
+  }
   paused = false;
-  runCountdown();
+  updateTime(); // Start the real-time updates
 }
 
 function runStop() {
   paused = true;
-  clearTimeout(currentTimeout);
 }
 
 function runReset() {
-  clearTimeout(currentTimeout);
-  paused = false;
-  workCount = workTime;
-  breakCount = breakTime;
-  longBreakCount = longBreakTime;
-  secondCount = 0;
+  paused = true;
   cycleCount = 0;
   currentPhase = "work";
+  elapsedTime = 0; // Reset elapsed time
+  remainingTime = workTime;
+  startTime = Date.now(); // Reset start time for the new session
   setMinutes("00");
   setSeconds("00");
   setElement(workSpan, cycleCount);
